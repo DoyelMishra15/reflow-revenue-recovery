@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data_volume/reflow.db
+      - CORS_ALLOW_ORIGINS=*
+    volumes:
+      - reflow_data:/app/data_volume
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  reflow_data:
