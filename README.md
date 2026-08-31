@@ -128,7 +128,7 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 Then open `frontend/index.html` in a browser (or `python -m http.server 8080` from `frontend/`) — the dashboard auto-seeds demo data and points at `localhost:8000` automatically.
-
+ 
 **Or with Docker:**
 
 ```bash
