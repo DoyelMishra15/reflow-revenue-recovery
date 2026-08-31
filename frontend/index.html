@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reflow · Revenue Recovery Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">R</span>
+      <div>
+        <h1>Reflow</h1>
+        <p>Revenue recovery command center</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="api-config">
+        <label for="apiBase">API</label>
+        <input id="apiBase" placeholder="same origin" spellcheck="false" />
+        <button id="runAllBtn" class="primary">Run agent on all pending</button>
+        <button id="refreshBtn" class="secondary">Refresh</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav" id="mainNav">
+    <button class="nav-btn active" data-view="command">Command Center</button>
+    <button class="nav-btn" data-view="transactions">Transactions</button>
+    <button class="nav-btn" data-view="incidents">Incidents</button>
+    <button class="nav-btn" data-view="policylab">Policy Lab</button>
+    <button class="nav-btn" data-view="analytics">Analytics</button>
+    <button class="nav-btn" data-view="audit">Audit Trail</button>
+  </nav>
+
+  <main>
+
+    <!-- ============ COMMAND CENTER ============ -->
+    <section class="view active" id="view-command">
+      <section class="kpi-grid" id="kpiGrid">
+        <div class="kpi kpi-risk">
+          <span class="kpi-label">Revenue at risk</span>
+          <span class="kpi-value" id="kpiRevenueAtRisk">–</span>
+          <span class="kpi-sub" id="kpiRevenueAtRiskSub">open failed transactions</span>
+        </div>
+        <div class="kpi kpi-good">
+          <span class="kpi-label">Revenue recovered</span>
+          <span class="kpi-value" id="kpiRevenueRecovered">–</span>
+          <span class="kpi-sub" id="kpiRevenueRecoveredSub"></span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Recovery rate</span>
+          <span class="kpi-value" id="kpiRecoveryRate">–</span>
+          <span class="kpi-sub">of resolved transactions</span>
+        </div>
+        <div class="kpi kpi-bad">
+          <span class="kpi-label">Systemic incidents</span>
+          <span class="kpi-value" id="kpiIncidentCount">–</span>
+          <span class="kpi-sub" id="kpiIncidentSub">detected right now</span>
+        </div>
+      </section>
+
+      <div class="panel" style="margin-bottom:14px" id="commandIncidentsPanel">
+        <div class="panel-header">
+          <h2>Systemic incidents</h2>
+          <span class="hint">Auto-detected clusters of related failures — see Incidents tab for full detail</span>
+        </div>
+        <div id="commandIncidentsBody" class="incident-list" style="padding:16px 18px"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header"><h2>Revenue leak radar</h2></div>
+          <div class="leak-tabs" id="leakTabs">
+            <button class="leak-tab active" data-dim="by_failure_reason">Reason</button>
+            <button class="leak-tab" data-dim="by_bank">Bank</button>
+            <button class="leak-tab" data-dim="by_payment_method">Method</button>
+            <button class="leak-tab" data-dim="by_category">Category</button>
+          </div>
+          <div id="leakBars" class="bar-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Reflow vs. blind retry</h2>
+            <span class="hint">Live, this dataset</span>
+          </div>
+          <div class="vs-grid" id="vsGrid">
+            <div class="vs-col reflow">
+              <h4>Reflow (gated + ML)</h4>
+              <div class="vs-value" id="vsReflowRecovered">–</div>
+              <div class="vs-sub" id="vsReflowSub"></div>
+            </div>
+            <div class="vs-divider">vs</div>
+            <div class="vs-col blind">
+              <h4>Blind retry (naive)</h4>
+              <div class="vs-value" id="vsBlindRecovered">–</div>
+              <div class="vs-sub" id="vsBlindSub"></div>
+            </div>
+          </div>
+          <div class="vs-delta" id="vsDelta"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Live recovery queue</h2>
+            <span class="hint">Click a row to open the recovery workflow</span>
+          </div>
+          <div class="table-wrap">
+            <table id="txnTableCmd">
+              <thead>
+                <tr><th>txn_id</th><th>Amount</th><th>Method</th><th>Failure reason</th><th>Status</th></tr>
+              </thead>
+              <tbody id="txnBodyCmd"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" id="workflowPanelCmd">
+          <div class="panel-header">
+            <h2>Recovery workflow</h2>
+            <span class="hint" id="traceHintCmd">Select a transaction</span>
+          </div>
+          <div id="traceBodyCmd" class="trace-body">
+            <p class="empty">Detect → diagnose → intervene → execute → observe. Pick a transaction on the left to trace it.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TRANSACTIONS ============ -->
+    <section class="view" id="view-transactions">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>All transactions</h2>
+            <span class="hint">Click a row for full detail</span>
+          </div>
+          <div class="table-wrap">
+            <table id="txnTable">
+              <thead>
+                <tr>
+                  <th>txn_id</th><th>Amount</th><th>Method</th><th>Failure reason</th>
+                  <th>Attempt</th><th>Risk</th><th>Status</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="txnBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" id="workflowPanel">
+          <div class="panel-header">
+            <h2>Recovery workflow</h2>
+            <span class="hint" id="traceHint">Select a transaction</span>
+          </div>
+          <div id="traceBody" class="trace-body">
+            <p class="empty">Detect → diagnose → intervene → execute → observe. Pick a transaction on the left to trace it.</p>
+          </div>
+
+          <div class="subpanel" id="dnaSubpanel" style="display:none">
+            <h3>Failure DNA</h3>
+            <div class="dna-grid" id="dnaGrid"></div>
+          </div>
+
+          <div class="subpanel" id="whatsappSubpanel" style="display:none">
+            <h3>WhatsApp recovery preview</h3>
+            <div id="whatsappBody"></div>
+          </div>
+
+          <div class="subpanel" id="replaySubpanel" style="display:none">
+            <h3>Agent replay</h3>
+            <div class="replay-timeline" id="replayTimeline"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Recovery opportunity score</h2>
+          <span class="hint">Open transactions ranked by expected recovery value</span>
+        </div>
+        <div id="opportunityBody"></div>
+      </div>
+    </section>
+
+    <!-- ============ INCIDENTS ============ -->
+    <section class="view" id="view-incidents">
+      <div class="panel" style="margin-bottom:14px">
+        <div class="panel-header">
+          <h2>Active incidents</h2>
+          <span class="hint">Systemic degradation clusters — bank/method + failure reason spikes</span>
+        </div>
+        <div id="incidentsBody" class="incident-list" style="padding:16px 18px"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Chaos / incident simulator</h2>
+          <span class="hint">Demo-only — injects synthetic transactions in memory, never touches the database</span>
+        </div>
+        <div class="chaos-controls">
+          <select id="chaosSelect"></select>
+          <button class="primary" id="chaosRunBtn">Inject scenario</button>
+        </div>
+        <div class="chaos-result" id="chaosResult"></div>
+      </div>
+    </section>
+
+    <!-- ============ POLICY LAB ============ -->
+    <section class="view" id="view-policylab">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Live policy lab</h2>
+          <span class="hint">Simulation only — recomputes against the current dataset, never mutates it</span>
+        </div>
+        <div class="policy-controls">
+          <div class="slider-group">
+            <div class="sg-head"><span>Confidence threshold</span><strong id="thresholdValue">20%</strong></div>
+            <input type="range" id="thresholdSlider" min="0" max="100" value="20" step="1" />
+          </div>
+          <div class="slider-group">
+            <div class="sg-head"><span>Cooldown multiplier</span><strong id="cooldownValue">1.0x</strong></div>
+            <input type="range" id="cooldownSlider" min="10" max="300" value="100" step="10" />
+          </div>
+          <div class="sim-disclaimer">Dragging these sliders re-runs the retry policy against every transaction currently in the dataset and shows what recovery rate, revenue, and unnecessary retries would result — purely client-visible simulation.</div>
+        </div>
+        <div class="compare-grid">
+          <div class="compare-col live" id="policyLiveCol">
+            <h4>Current live policy</h4>
+            <div id="policyLiveBody"></div>
+          </div>
+          <div class="compare-col" id="policySimCol">
+            <h4>Simulated policy</h4>
+            <div id="policySimBody"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ANALYTICS ============ -->
+    <section class="view" id="view-analytics">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header"><h2>Recovery strategy performance</h2></div>
+          <div class="table-wrap">
+            <table id="strategyTable">
+              <thead><tr><th>Strategy</th><th>Attempts</th><th>Captured</th><th>Capture rate</th></tr></thead>
+              <tbody id="strategyBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h2>Failure reasons</h2></div>
+          <div id="failureBars" class="bar-list"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Model performance</h2>
+            <span class="hint">Held-out test set, reproducible via <code>evaluation/evaluate.py</code></span>
+          </div>
+          <div id="modelPerf" class="metrics-body"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Policy vs. baselines</h2>
+            <span class="hint">retry_all · retry_all_gated · reflow_ml_policy on held-out data</span>
+          </div>
+          <div id="baselineCompare" class="table-wrap"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Model calibration</h2>
+          <span class="hint">Predicted success probability vs. actual outcome, bucketed — from live retry attempts</span>
+        </div>
+        <div id="calibBody" class="calib-grid"></div>
+        <div class="calib-legend">
+          <span class="predicted">Avg predicted</span>
+          <span class="actual">Actual success rate</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ AUDIT TRAIL ============ -->
+    <section class="view" id="view-audit">
+      <section class="panel">
+        <div class="panel-header"><h2>Audit trail</h2><span class="hint">Every decision, gate, and outcome — newest first</span></div>
+        <div id="auditBody" class="audit-body"></div>
+      </section>
+    </section>
+
+  </main>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Transaction</h2>
+        <button id="modalClose" class="icon-btn">✕</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
