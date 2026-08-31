@@ -1,0 +1,9 @@
+{
+  "roc_auc": 0.8181,
+  "brier_score": 0.1745,
+  "precision_at_0.5": 0.7525,
+  "recall_at_0.5": 0.7513,
+  "n_train": 4800,
+  "n_test": 1200,
+  "base_success_rate": 0.4955
+}
