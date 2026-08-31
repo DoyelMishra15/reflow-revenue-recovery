@@ -1,0 +1,66 @@
+<svg viewBox="0 0 980 560" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b8cff"/>
+    </marker>
+  </defs>
+  <rect width="980" height="560" fill="#0b0e14"/>
+
+  <text x="30" y="36" fill="#e6e9f0" font-size="20" font-weight="700">Reflow — Payment Recovery Engine</text>
+  <text x="30" y="56" fill="#8891a5" font-size="12">failed payment → gated policy decision → mock retry → audit trail</text>
+
+  <!-- Frontend -->
+  <rect x="30" y="90" width="200" height="70" rx="10" fill="#12161f" stroke="#212736"/>
+  <text x="130" y="118" fill="#e6e9f0" font-size="13" text-anchor="middle" font-weight="600">Dashboard (frontend)</text>
+  <text x="130" y="138" fill="#8891a5" font-size="11" text-anchor="middle">vanilla JS console</text>
+
+  <!-- API -->
+  <rect x="300" y="90" width="220" height="70" rx="10" fill="#12161f" stroke="#212736"/>
+  <text x="410" y="118" fill="#e6e9f0" font-size="13" text-anchor="middle" font-weight="600">FastAPI</text>
+  <text x="410" y="138" fill="#8891a5" font-size="11" text-anchor="middle">transactions / retries / dashboard</text>
+
+  <line x1="230" y1="125" x2="298" y2="125" stroke="#5b8cff" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Retry engine -->
+  <rect x="300" y="220" width="220" height="90" rx="10" fill="#12161f" stroke="#212736"/>
+  <text x="410" y="248" fill="#e6e9f0" font-size="13" text-anchor="middle" font-weight="600">Retry Policy Engine</text>
+  <text x="410" y="266" fill="#8891a5" font-size="11" text-anchor="middle">rule gates first</text>
+  <text x="410" y="282" fill="#8891a5" font-size="11" text-anchor="middle">(risk / max-attempts / cooldown)</text>
+
+  <line x1="410" y1="160" x2="410" y2="218" stroke="#5b8cff" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ML model -->
+  <rect x="570" y="220" width="200" height="90" rx="10" fill="#12161f" stroke="#212736"/>
+  <text x="670" y="248" fill="#e6e9f0" font-size="13" text-anchor="middle" font-weight="600">GBM classifier</text>
+  <text x="670" y="266" fill="#8891a5" font-size="11" text-anchor="middle">P(retry succeeds)</text>
+  <text x="670" y="282" fill="#8891a5" font-size="11" text-anchor="middle">trained offline, joblib</text>
+
+  <line x1="522" y1="255" x2="568" y2="255" stroke="#c084fc" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="545" y="245" fill="#c084fc" font-size="10" text-anchor="middle">score</text>
+
+  <!-- Mock Razorpay -->
+  <rect x="300" y="350" width="220" height="80" rx="10" fill="#12161f" stroke="#212736"/>
+  <text x="410" y="378" fill="#e6e9f0" font-size="13" text-anchor="middle" font-weight="600">Razorpay mock client</text>
+  <text x="410" y="396" fill="#8891a5" font-size="11" text-anchor="middle">test-mode retry_payment()</text>
+
+  <line x1="410" y1="310" x2="410" y2="348" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="440" y="332" fill="#34d399" font-size="10">retry_now only</text>
+
+  <!-- DB -->
+  <rect x="30" y="350" width="220" height="80" rx="10" fill="#12161f" stroke="#212736"/>
+  <text x="140" y="378" fill="#e6e9f0" font-size="13" text-anchor="middle" font-weight="600">SQLite / Postgres</text>
+  <text x="140" y="396" fill="#8891a5" font-size="11" text-anchor="middle">transactions · retries · audit_log</text>
+
+  <line x1="300" y1="390" x2="252" y2="390" stroke="#5b8cff" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="410" y1="350" x2="180" y2="240" stroke="#5b8cff" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+
+  <!-- Evaluation -->
+  <rect x="570" y="350" width="200" height="80" rx="10" fill="#12161f" stroke="#212736"/>
+  <text x="670" y="378" fill="#e6e9f0" font-size="13" text-anchor="middle" font-weight="600">evaluation/evaluate.py</text>
+  <text x="670" y="396" fill="#8891a5" font-size="11" text-anchor="middle">ML policy vs. gated baseline</text>
+
+  <line x1="670" y1="310" x2="670" y2="348" stroke="#8891a5" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+  <text x="30" y="480" fill="#8891a5" font-size="11">Every decision passes hard rule gates before the model score can trigger an action —</text>
+  <text x="30" y="498" fill="#8891a5" font-size="11">the classifier informs which branch to take, it never bypasses a gate.</text>
+</svg>
